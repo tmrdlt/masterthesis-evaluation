@@ -33,7 +33,7 @@ nasa_tlx_plot <- ggplot(data, aes(fill=name, x=factor(name, level=name), y=value
 
 print(nasa_tlx_plot)
 
-ggsave("plots/nasa_tlx_plot.eps",
+ggsave("plots/bar_nasa_tlx_plot.eps",
        plot = nasa_tlx_plot,
        device = "eps",
        scale = 1, units = "cm",
@@ -75,7 +75,7 @@ plot_due <- ggplot(data_due, aes(x=factor(Type, level=unique(Type)), y=value, fi
   theme(legend.title = element_blank()) +
   scale_fill_brewer(palette = "Blues")
 
-plot_order <- ggplot(melt(diff_order, id.vars=c("Participant ID")), aes(x=variable, y=value, fill=variable)) + 
+plot_order <- ggplot(data_order, aes(x=variable, y=value, fill=variable)) + 
   geom_boxplot() + 
   # geom_jitter() +
   xlab(" ") + ylab("Similarity to proposed order") + 
@@ -87,19 +87,19 @@ plot_h
 plot_due
 plot_order
 
-ggsave("plots/diff_h.eps",
+ggsave("plots/box_diff_h.eps",
        plot = plot_h,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
        limitsize = TRUE)
-ggsave("plots/diff_due.eps",
+ggsave("plots/box_diff_due.eps",
        plot = plot_due,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
        limitsize = TRUE)
-ggsave("plots/diff_order.eps",
+ggsave("plots/box_diff_order.eps",
        plot = plot_order,
        device = "eps",
        scale = 1, units = "cm",
@@ -107,3 +107,103 @@ ggsave("plots/diff_order.eps",
        limitsize = TRUE)
 ```
 
+```{r}
+getwd()
+library(readxl)
+library(dplyr)
+library(ggsci)
+library(ggthemes)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+
+import <- read_excel("data/Task1.xlsx", sheet = "events")
+events = subset(import, select = -c(1,3) ) # drops first column (Participant ID)
+
+means <- subset(events %>% group_by(`Used before`) %>% summarize_each(funs(mean)),
+                select = -c(2))
+sds <- subset(events %>% group_by(events$`Used before`) %>% summarize_each(funs(sd)),
+              select = -c(2))
+colnames(means)[1] <- "used" # rename first column
+colnames(sds)[1] <- "used" # rename first column
+
+mean_melt <- melt(means, id.vars=c("used"))
+sd_melt <- melt(sds, id.vars=c("used"))
+
+colnames(mean_melt)[3] <- "mean" # rename third column
+colnames(sd_melt)[3] <- "sd" # rename first column
+
+data <- merge(mean_melt,sd_melt, by=c("used","variable"))
+
+plot <- ggplot(data, aes(x=reorder(variable, -mean), y=mean, fill=factor(used))) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=0.2, position=position_dodge(.9)) + 
+  xlab("Event type") + ylab("Events") +
+  theme_minimal() +
+  # scale_fill_brewer(palette = "Blues") + 
+  theme(legend.position="top") + 
+  scale_fill_manual(values=c("#F87171", "#34D399"), 
+                    name="Have you used board based tools before?",
+                    labels=c("no (n=3)", "yes (n=10)"))
+print(plot)
+
+ggsave("plots/bar_events_by_exp.eps",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+```
+
+```{r}
+getwd()
+library(readxl)
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(ggthemes)
+
+
+nesting <- read_excel("data/Task1.xlsx", sheet = "nesting")
+
+nesting_melted <- melt(nesting, id.vars="Participant ID")
+View(nesting_melted)
+
+data <- nesting_melted %>% group_by(variable) %>% summarize_at(vars(value), funs(mean, sd))
+
+plot <- data %>%
+  ggplot(aes(x=factor(variable, level=variable), y=mean)) + 
+  geom_bar(stat="identity", position = "dodge", colour = "#000000") + 
+  geom_errorbar(aes(x=variable, ymin=mean-sd, ymax=mean+sd), width=0.2) + 
+  xlab("Arrangement") + ylab("Nesting level") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Blues")
+
+print(plot)
+
+ggsave("plots/bar_preffered_nesting_level",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+
+```
+
+
+
+
+```{r}
+getwd()
+library(readxl)
+events <- read_excel("data/Task1.xlsx", sheet = "events")
+View(events)
+
+c1 <- cor.test(events$`Used before`, events$`All events`)
+c2 <-cor.test(events$`Used before`, events$move)
+c3 <- cor.test(events$`Used before`, events$create)
+
+c4 <- cor.test(events$`Prior experience`, events$`All events`)
+c5 <- cor.test(events$`Prior experience`, events$move)
+c6 <- cor.test(events$`Prior experience`, events$create)
+```
