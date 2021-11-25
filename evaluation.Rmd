@@ -3,6 +3,9 @@ output:
   html_document: default
   pdf_document: default
 ---
+# User study Intelligent Task Management and Visualisation: Evaluation
+
+## Task 1.1 - Extended Nasa-TLX
 ```{r}
 getwd()
 library(readxl)
@@ -39,6 +42,91 @@ ggsave("plots/bar_nasa_tlx_plot.eps",
        limitsize = TRUE)
 ```
 
+# Task 1.1 - Number of events by prior experience 
+```{r}
+getwd()
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+events <- read_excel("data/Task1.xlsx", sheet = "events")
+
+data <- events %>%
+  pivot_longer(cols=c(4:11), names_to="variable", values_to="value") %>%
+  group_by(`Used before`, variable) %>%
+  summarise_at(vars(value), list(~mean(.), ~sd(.)))
+
+plot <- data %>%
+  ggplot(aes(x=reorder(variable, -mean), y=mean, fill=factor(`Used before`))) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=0.2, position=position_dodge(.9)) + 
+  xlab("Event type") + ylab("Events") +
+  theme_minimal() +
+  theme(legend.position="top") + 
+  scale_fill_manual(values=c("#F87171", "#34D399"), 
+                    name="Have you used board based tools before?",
+                    labels=c("no (n=3)", "yes (n=10)"))
+print(plot)
+
+ggsave("plots/bar_events_by_exp.eps",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+```
+
+## Task 1.2 Correlation experience -> number of events
+```{r}
+getwd()
+library(readxl)
+events <- read_excel("data/Task1.xlsx", sheet = "events")
+
+c1 <- cor.test(events$`Used before`, events$`All events`)
+c2 <-cor.test(events$`Used before`, events$move)
+c3 <- cor.test(events$`Used before`, events$create)
+
+c4 <- cor.test(events$`Prior experience`, events$`All events`)
+c5 <- cor.test(events$`Prior experience`, events$move)
+c6 <- cor.test(events$`Prior experience`, events$create)
+```
+
+## Task 1.2 - Nesting comparision
+```{r}
+getwd()
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+nesting <- read_excel("data/Task1.xlsx", sheet = "nesting")
+
+data <- nesting %>% pivot_longer(cols=-c(`Participant ID`), names_to="variable", values_to="value") %>% 
+  group_by(variable) %>% 
+  summarize_at(vars(value), list(~mean(.), ~sd(.))) %>%
+  arrange(factor(variable, levels = c("Standard", "Personal", "Favourite of proposed", "Favourite overall")))
+
+plot <- data %>%
+  ggplot(aes(x=factor(variable, level=variable), y=mean, fill=variable)) + 
+  geom_bar(stat="identity", position = "dodge", colour = "#000000") + 
+  geom_errorbar(aes(x=variable, ymin=mean-sd, ymax=mean+sd), width=0.2) + 
+  xlab("Arrangement") + ylab("Nesting level") +
+  guides(fill="none") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Blues")
+
+print(plot)
+
+ggsave("plots/bar_preffered_nesting_level.eps",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+```
+
+## Task 2 - Manual scheduling evaluation
 ```{r}
 getwd()
 library(readxl)
@@ -105,88 +193,4 @@ ggsave("plots/box_diff_order.eps",
        limitsize = TRUE)
 ```
 
-```{r}
-getwd()
-library(readxl)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
 
-events <- read_excel("data/Task1.xlsx", sheet = "events")
-
-data <- events %>%
-  pivot_longer(cols=c(4:11), names_to="variable", values_to="value") %>%
-  group_by(`Used before`, variable) %>%
-  summarise_at(vars(value), list(~mean(.), ~sd(.)))
-
-plot <- data %>%
-  ggplot(aes(x=reorder(variable, -mean), y=mean, fill=factor(`Used before`))) + 
-  geom_bar(stat="identity", position = "dodge") + 
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=0.2, position=position_dodge(.9)) + 
-  xlab("Event type") + ylab("Events") +
-  theme_minimal() +
-  theme(legend.position="top") + 
-  scale_fill_manual(values=c("#F87171", "#34D399"), 
-                    name="Have you used board based tools before?",
-                    labels=c("no (n=3)", "yes (n=10)"))
-print(plot)
-
-ggsave("plots/bar_events_by_exp.eps",
-       plot = plot,
-       device = "eps",
-       scale = 1, units = "cm",
-       dpi = 300,
-       limitsize = TRUE)
-```
-
-```{r}
-getwd()
-library(readxl)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-
-nesting <- read_excel("data/Task1.xlsx", sheet = "nesting")
-
-data <- nesting %>% pivot_longer(cols=-c(`Participant ID`), names_to="variable", values_to="value") %>% 
-  group_by(variable) %>% 
-  summarize_at(vars(value), list(~mean(.), ~sd(.))) %>%
-  arrange(factor(variable, levels = c("Standard", "Personal", "Favourite of proposed", "Favourite overall")))
-
-plot <- data %>%
-  ggplot(aes(x=factor(variable, level=variable), y=mean, fill=variable)) + 
-  geom_bar(stat="identity", position = "dodge", colour = "#000000") + 
-  geom_errorbar(aes(x=variable, ymin=mean-sd, ymax=mean+sd), width=0.2) + 
-  xlab("Arrangement") + ylab("Nesting level") +
-  guides(fill="none") +
-  theme_minimal() +
-  scale_fill_brewer(palette = "Blues")
-
-print(plot)
-
-ggsave("plots/bar_preffered_nesting_level",
-       plot = plot,
-       device = "eps",
-       scale = 1, units = "cm",
-       dpi = 300,
-       limitsize = TRUE)
-
-```
-
-
-
-
-```{r}
-getwd()
-library(readxl)
-events <- read_excel("data/Task1.xlsx", sheet = "events")
-View(events)
-
-c1 <- cor.test(events$`Used before`, events$`All events`)
-c2 <-cor.test(events$`Used before`, events$move)
-c3 <- cor.test(events$`Used before`, events$create)
-
-c4 <- cor.test(events$`Prior experience`, events$`All events`)
-c5 <- cor.test(events$`Prior experience`, events$move)
-c6 <- cor.test(events$`Prior experience`, events$create)
-```
