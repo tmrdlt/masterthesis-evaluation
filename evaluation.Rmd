@@ -119,7 +119,7 @@ plot <- data %>%
 print(plot)
 
 ggsave("plots/bar_levels.eps",
-       plot = plot_waffle,
+       plot = plot,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
@@ -186,7 +186,7 @@ diff_order <- read_excel("data/data_prepared.xlsx", sheet="task_2_diff_order")
 
 data_h <- melt(diff_h, id.vars=c("Participant ID", "Type"))
 data_due <- melt(diff_due, id.vars=c("Participant ID", "Type"))
-data_order <- melt(diff_order, id.vars=c("Participant ID"))
+data_order <- melt(diff_order, id.vars=c("Participant ID", "Type"))
 
 plot_h <- data_h %>%
   ggplot(aes(x=factor(Type, level=unique(Type)), y=value, fill=variable)) + 
@@ -207,13 +207,13 @@ plot_due <- data_due %>%
   scale_fill_brewer(palette = "Blues")
 
 plot_order <- data_order %>%
-  ggplot(aes(x=variable, y=value, fill=variable)) + 
+  ggplot(aes(x=factor(Type, level=unique(Type)), y=value, fill=variable)) + 
   geom_boxplot() + 
   # geom_jitter() +
   scale_y_continuous(breaks = c(.2, .4, .6, .8, 1), limits=c(0,1)) +
-  xlab(" ") + ylab("Similarity to proposed order") + 
-  guides(fill="none") +
+  xlab("Similarity of manual order") + ylab("Similarity measure") + 
   theme_minimal() + 
+  theme(legend.title = element_blank()) +
   scale_fill_brewer(palette = "Blues")
 
 plot_h
