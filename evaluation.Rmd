@@ -13,7 +13,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-nasa_tlx <- read_excel("data/nasa_tlx_data.xlsx")
+nasa_tlx <- read_excel("data/data_prepared.xlsx", sheet="task_1_ext_nasa_tlx")
 
 data <- nasa_tlx %>%
   pivot_longer(cols = c(`Workload`, `Sense of control`, `Creativity Support Index`), names_to="variable", values_to="value") %>%
@@ -50,7 +50,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-events <- read_excel("data/Task1.xlsx", sheet = "events")
+events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
 
 data <- events %>%
   pivot_longer(cols=c(4:11), names_to="variable", values_to="value") %>%
@@ -81,7 +81,7 @@ ggsave("plots/bar_events_by_exp.eps",
 ```{r}
 getwd()
 library(readxl)
-events <- read_excel("data/Task1.xlsx", sheet = "events")
+events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
 
 c1 <- cor.test(events$`Used before`, events$`All events`)
 c2 <-cor.test(events$`Used before`, events$move)
@@ -100,7 +100,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-level <- read_excel("data/Task1.xlsx", sheet = "level")
+level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
 
 data <- level %>% pivot_longer(cols=-c(`Participant ID`), names_to="variable", values_to="value") %>% 
   group_by(variable) %>% 
@@ -134,7 +134,7 @@ library(ggplot2)
 library(waffle)
 library(scales)
 
-favourite <- read_excel("data/Task1.xlsx", sheet = "favourite")
+favourite <- read_excel("data/data_prepared.xlsx", sheet="task_1_favourite")
 
 data1 <- favourite %>%
   count(`Favourite of proposed`, sort=TRUE) %>%
@@ -151,14 +151,15 @@ data2 <- favourite %>%
 plot1 <- waffle(data1, rows=1)
 plot2 <- waffle(data2, rows=1)
 
-print(plot1)
-print(plot2)
+plot1
+plot2
 
 ggsave("plots/waffle_favourite_of_proposed.eps",
        plot = plot1,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
+       height = 4,
        limitsize = TRUE)
 
 ggsave("plots/waffle_favourite_overall.eps",
@@ -166,6 +167,7 @@ ggsave("plots/waffle_favourite_overall.eps",
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
+       height = 4,
        limitsize = TRUE)
 
 ```
@@ -178,9 +180,9 @@ library(readxl)
 library(reshape2)
 library(ggplot2)
 
-diff_h <- read_excel("data/Diff.xlsx", sheet = "diff_h")
-diff_due <- read_excel("data/Diff.xlsx", sheet = "diff_due")
-diff_order <- read_excel("data/Diff.xlsx", sheet = "diff_order")
+diff_h <- read_excel("data/data_prepared.xlsx", sheet="task_2_diff_h")
+diff_due <- read_excel("data/data_prepared.xlsx", sheet="task_2_diff_due")
+diff_order <- read_excel("data/data_prepared.xlsx", sheet="task_2_diff_order")
 
 data_h <- melt(diff_h, id.vars=c("Participant ID", "Type"))
 data_due <- melt(diff_due, id.vars=c("Participant ID", "Type"))
@@ -237,5 +239,134 @@ ggsave("plots/box_diff_order.eps",
        dpi = 300,
        limitsize = TRUE)
 ```
+## Task 1 - Likert type questions
+```{r}
+library(dplyr)
+library(readxl)
+library(likert)
+
+likert1 <- read_excel("data/data_prepared.xlsx", sheet="likert_1")
+likert1 <- likert1 %>% select(-c(`Participant ID`))
+
+questions <- c(
+  "I understood what my task was about.", 
+  "The software supported me visualizing the project.", 
+  "The arrangement I created matches my mental image of the project."
+  )
+
+data <- likert1 %>%
+    mutate_all(~dplyr::recode(., `1` = "Strongly disagree", `2` = "Disagree", `3` = "Neutral", `4` = "Agree", `5` = "Strongly agree")) %>%
+    lapply(factor, levels= c("Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"), ordered = TRUE) %>%
+    as.data.frame()  %>% 
+  rename(
+      !!questions[1] := "LTQ1A",
+      !!questions[2] := "LTQ1B",
+      !!questions[3] := "LTQ1C"
+    ) 
 
 
+
+plot <- likert(data) %>%
+  likert.bar.plot(wrap=25, group.order = names(data)) +
+  theme_minimal() + 
+  theme(axis.text.y = element_text(size = 8), legend.position = "bottom", legend.text=element_text(size = 8))
+
+plot(plot)
+
+ggsave("plots/likert_1.eps",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+```
+
+## Task 2 - Likert type questions
+```{r}
+library(dplyr)
+library(readxl)
+library(likert)
+
+likert2 <- read_excel("data/data_prepared.xlsx", sheet="likert_2")
+likert2 <- likert2 %>% select(-c(`Participant ID`))
+
+questions <- c(
+  "I feel patronized by the software making the planning for me.",
+  "I find the proposal easy to perceive.",
+  "I find the proposal intelligable.",
+  "I trust the proposal to be better than my manual planning.",
+  "I would find an automatic planning feature like this to be helpful.",
+  "It is likely that I would use an automatic planning feature like this.",
+  "If my privacy is guaranteed, I am generally open to intelligent features in a software like this."
+  )
+
+data <- likert2 %>%
+    mutate_all(~dplyr::recode(., `1` = "Strongly disagree", `2` = "Disagree", `3` = "Neutral", `4` = "Agree", `5` = "Strongly agree")) %>%
+    lapply(factor, levels= c("Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree")) %>%
+    as.data.frame()  %>% 
+  rename(
+      !!questions[1] := "LTQ2A",
+      !!questions[2] := "LTQ2B",
+      !!questions[3] := "LTQ2C",
+      !!questions[4] := "LTQ2D",
+      !!questions[5] := "LTQ2E",      
+      !!questions[6] := "LTQ2F",
+      !!questions[7] := "LTQ2G",
+    ) 
+
+plot <- likert(data) %>%
+  likert.bar.plot(wrap=30, ordered=FALSE, group.order=names(data)) +
+  theme_minimal() + 
+  theme(axis.text.y = element_text(size = 8), legend.position = "bottom", legend.text=element_text(size = 8))
+
+print(plot)
+
+ggsave("plots/likert_2.eps",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+```
+
+## General - Likert type questions
+```{r}
+library(dplyr)
+library(readxl)
+library(likert)
+
+likert3 <- read_excel("data/data_prepared.xlsx", sheet="likert_3")
+likert3 <- likert3 %>% select(-c(`Participant ID`))
+
+questions <- c(
+  "I found the interface of the software easy to understand.",
+  "The features of the software were clear to me. I understand what can be done using the features.",
+  "I liked the possibility to arrange elements (boards, lists, items) in an arbitrarily nested way."
+  )
+
+data <- likert3 %>%
+    mutate_all(~dplyr::recode(., `1` = "Strongly disagree", `2` = "Disagree", `3` = "Neutral", `4` = "Agree", `5` = "Strongly agree")) %>%
+    lapply(factor, levels= c("Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"), ordered = TRUE) %>%
+    as.data.frame()  %>% 
+  rename(
+      !!questions[1] := "LTQ3A",
+      !!questions[2] := "LTQ3B",
+      !!questions[3] := "LTQ3C"
+    ) 
+
+
+
+plot <- likert(data) %>%
+  likert.bar.plot(wrap=25, group.order = names(data)) +
+  theme_minimal() + 
+  theme(axis.text.y = element_text(size = 8), legend.position = "bottom", legend.text=element_text(size = 8))
+
+plot(plot)
+
+ggsave("plots/likert_3.eps",
+       plot = plot,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+```
