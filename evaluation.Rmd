@@ -34,7 +34,7 @@ plot <- data %>%
 
 print(plot)
 
-ggsave("plots/bar_nasa_tlx_plot.eps",
+ggsave("plots/bar_nasa_tlx.eps",
        plot = plot,
        device = "eps",
        scale = 1, units = "cm",
@@ -100,9 +100,9 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-nesting <- read_excel("data/Task1.xlsx", sheet = "nesting")
+level <- read_excel("data/Task1.xlsx", sheet = "level")
 
-data <- nesting %>% pivot_longer(cols=-c(`Participant ID`), names_to="variable", values_to="value") %>% 
+data <- level %>% pivot_longer(cols=-c(`Participant ID`), names_to="variable", values_to="value") %>% 
   group_by(variable) %>% 
   summarize_at(vars(value), list(~mean(.), ~sd(.))) %>%
   arrange(factor(variable, levels = c("Standard", "Personal", "Favourite of proposed", "Favourite overall")))
@@ -118,13 +118,58 @@ plot <- data %>%
 
 print(plot)
 
-ggsave("plots/bar_preffered_nesting_level.eps",
-       plot = plot,
+ggsave("plots/bar_levels.eps",
+       plot = plot_waffle,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
        limitsize = TRUE)
 ```
+```{r}
+getwd()
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(waffle)
+library(scales)
+
+favourite <- read_excel("data/Task1.xlsx", sheet = "favourite")
+
+data1 <- favourite %>%
+  count(`Favourite of proposed`, sort=TRUE) %>%
+  mutate(freq = percent(n / sum(n))) %>%
+  unite(col=label , `Favourite of proposed`, freq , sep = ", ") %>%
+  pull(n, label)
+
+data2 <- favourite %>%
+  count(`Favourite overall`, sort=TRUE) %>%
+  mutate(freq = percent(n / sum(n))) %>%
+  unite(col=label , `Favourite overall`, freq , sep = ", ") %>%
+  pull(n, label)
+
+plot1 <- waffle(data1, rows=1)
+plot2 <- waffle(data2, rows=1)
+
+print(plot1)
+print(plot2)
+
+ggsave("plots/waffle_favourite_of_proposed.eps",
+       plot = plot1,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+
+ggsave("plots/waffle_favourite_overall.eps",
+       plot = plot2,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       limitsize = TRUE)
+
+```
+
 
 ## Task 2 - Manual scheduling evaluation
 ```{r}
