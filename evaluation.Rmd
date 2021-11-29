@@ -90,7 +90,6 @@ library(readxl)
 library(PerformanceAnalytics)
 events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
 
-View(events)
 data <- events[, c(2:14)]
 chart.Correlation(data, histogram = TRUE, method = "pearson")
 
@@ -113,7 +112,6 @@ library(readxl)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(ggthemes)
 
 level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
 
@@ -167,7 +165,6 @@ library(readxl)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(ggthemes)
 library(waffle)
 library(scales)
 
