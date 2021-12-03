@@ -26,6 +26,7 @@ data
 plot <- data %>%
   ggplot( aes(x=factor(variable, level=variable), y=mean, fill=variable)) + 
   geom_bar(position="dodge", stat="identity", width = 0.6) + 
+  geom_text(aes(label = round(mean, 2)), vjust=-0.5, hjust = -0.5) + 
   geom_errorbar(aes(x=variable, ymin=mean-sd, ymax=mean+sd), width=0.2) + 
   scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100), limits=c(0,100)) +
   xlab(" ") + ylab("Mean") +
@@ -49,15 +50,24 @@ getwd()
 library(readxl)
 library(dplyr)
 library(tidyr)
+library(tibble)
 library(ggplot2)
 library(stringr)
 
 events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
 
-data <- events %>%
+data_by_used <- events %>%
   pivot_longer(cols=c(4:11), names_to="variable", values_to="value") %>%
   group_by(`Used before`, variable) %>%
   summarise_at(vars(value), list(~mean(.), ~sd(.), ~n()))
+
+data_all <- events %>%
+  pivot_longer(cols=c(4:11), names_to="variable", values_to="value") %>%
+  group_by(variable) %>%
+  summarise_at(vars(value), list(~mean(.), ~sd(.), ~n())) %>%
+  add_column(`Used before`=2, .before=1)
+
+data <- rbind(data_by_used, data_all)
 
 data
 
@@ -68,9 +78,9 @@ plot <- data %>%
   xlab("Action type") + ylab("Actions") +
   theme_minimal() +
   theme(legend.position="top") + 
-  scale_fill_manual(values=c("#d8b365", "#5ab4ac"), 
+  scale_fill_manual(values=c("#d8b365", "#5ab4ac","#e5e5e5"), 
                     name="Have you used board based tools before?",
-                    labels=c("no (n=3)", "yes (n=10)")) +
+                    labels=c("no (n=3)", "yes (n=10)", "combined (n=13)")) +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 
 print(plot)
@@ -79,6 +89,7 @@ ggsave("plots/bar_events_by_exp.eps",
        plot = plot,
        device = "eps",
        scale = 1, units = "cm",
+       height = 12,
        dpi = 300,
        limitsize = TRUE)
 ```
@@ -128,6 +139,7 @@ colors <- c("Standard" = "#F7ECCA", "Personal" = "#c8d5b9", "Favourite of propos
 
 plot <- data %>%
   ggplot(aes(x=factor(variable, level=variable), y=mean, fill=variable)) + 
+  geom_text(aes(label = round(mean, 2)), vjust=-0.5, hjust = -0.5) + 
   geom_bar(stat="identity", position = "dodge", width = 0.7) + 
   geom_errorbar(aes(x=variable, ymin=mean-sd, ymax=mean+sd), width=0.2) + 
   xlab("Arrangement") + ylab("Nesting level") +
@@ -135,12 +147,40 @@ plot <- data %>%
   theme_minimal() +
   scale_fill_manual("legend", values = colors)
 
+data2 <- level %>% pivot_longer(cols=-c(`Participant ID`), names_to="variable", values_to="value")
+
+fun_mean <- function(x){
+  return(data.frame(y=mean(x),label=round(mean(x,na.rm=T),2)))}
+
+plot2 <- data2 %>%
+  ggplot(aes(x=factor(variable, level=unique(variable)), y=value, fill=variable)) +
+  geom_boxplot(aes_string(colour="variable", fill="variable"), width=0.7) +
+  stat_summary(geom = "crossbar", width=0.7, color="black", fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  xlab("Arrangement") + ylab("Nesting level") +
+  stat_summary(fun=mean, geom="point",colour="darkred", size=2) +
+  stat_summary(fun.data = fun_mean, geom="text", vjust=1.8) +
+  scale_y_continuous(breaks = c(0, 1, 2, 3, 4, 5), limits=c(0,5)) +
+  theme_minimal()+ 
+  theme(legend.position="none") + 
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors)
+
 print(plot)
+print(plot2)
 
 ggsave("plots/bar_levels.eps",
        plot = plot,
        device = "eps",
        scale = 1, units = "cm",
+       height=10,
+       dpi = 300,
+       limitsize = TRUE)
+
+ggsave("plots/box_levels.eps",
+       plot = plot2,
+       device = "eps",
+       scale = 1, units = "cm",
+       height = 10,
        dpi = 300,
        limitsize = TRUE)
 ```
@@ -151,12 +191,30 @@ library(stats)
 
 level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
 
+# Perform one-sample t-test to check if mean differs signficantly from standard value of 2
+# 1. sample size < 30 -> Check if data is normally distributed via Shapiro-Wilk's test
+# 2. 
+# 3. Outliers? -> Inspect Boxplot
+# http://www.sthda.com/english/wiki/one-sample-t-test-in-r
+# 
+
+library("ggpubr")
+ggqqplot(level$`Favourite of proposed`, ylab = "Personal nesting level",
+         ggtheme = theme_minimal())
 
 standard_lvl <- 2
 
-t.test(level$Personal, alternative="greater", mu=standard_lvl)
-t.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
-t.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
+shapiro.test(level$Personal)
+t.test(level$Personal, alternative = c("greater"), mu=standard_lvl)
+median(level$`Favourite of proposed`)
+
+# http://www.sthda.com/english/wiki/wiki.php?title=one-sample-wilcoxon-signed-rank-test-in-r
+shapiro.test(level$`Favourite of proposed`)
+# One-sample Wilcoxon signed rank test because data is not normally distributed
+wilcox.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
+
+shapiro.test(level$`Favourite overall`)
+wilcox.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
 ```
 
 ```{r}
@@ -211,6 +269,8 @@ ggsave("plots/waffle_favourite_overall.eps",
 
 ## Task 2 - Manual scheduling evaluation
 ```{r}
+# Removing borders on box_plot: http://biochemres.com/beautiful-minimalist-boxplots-with-r-and-ggplot2
+
 getwd()
 library(readxl)
 library(reshape2)
@@ -225,33 +285,52 @@ data_due <- melt(diff_due, id.vars=c("Participant ID", "Type"))
 data_order <- melt(diff_order, id.vars=c("Participant ID", "Type"))
 
 colors <- c("Task 2.1" = "#a9ad71", "Task 2.2" = "#fa9500")
+
+fun_mean <- function(x){
+  return(data.frame(y=mean(x),label=round(mean(x,na.rm=T),2)))}
+
 plot_h <- data_h %>%
   ggplot(aes(x=factor(Type, level=unique(Type)), y=value, fill=variable)) +
-  geom_boxplot() + 
-  # geom_jitter() +
+  geom_boxplot(aes_string(colour="variable", fill="variable"), width=0.7) +
+  stat_summary(geom = "crossbar", width=0.63, position = position_dodge(width = 0.7), color="black", 
+               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  stat_summary(fun=mean, geom="point",colour="darkred", position = position_dodge(width = 0.7)) +
+  stat_summary(fun.data = fun_mean, geom="text", size=3, vjust=1.6, position = position_dodge(width = 0.7)) +
   xlab("Error type") + ylab("Working hours") + 
   theme_minimal() + 
   theme(legend.title = element_blank()) + 
-  scale_fill_manual("legend", values = colors)
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  guides(fill="none")
 
 plot_due <- data_due %>%
   ggplot(aes(x=factor(Type, level=unique(Type)), y=value, fill=variable)) + 
-  geom_boxplot() + 
-  # geom_jitter() +
+  geom_boxplot(aes_string(colour="variable", fill="variable"), width=0.7) +
+  stat_summary(geom = "crossbar", width=0.63, position = position_dodge(width = 0.7), color="black", 
+               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  stat_summary(fun=mean, geom="point",colour="darkred", position = position_dodge(width = 0.7)) +
+  stat_summary(fun.data = fun_mean, geom="text", size=3, vjust=1.6, position = position_dodge(width = 0.7)) +
   xlab("Error type") + ylab("Missed due dates") +
   theme_minimal() + 
   theme(legend.title = element_blank()) +
-  scale_fill_manual("legend", values = colors)
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  guides(fill="none")
 
 plot_order <- data_order %>%
   ggplot(aes(x=factor(Type, level=unique(Type)), y=value, fill=variable)) + 
-  geom_boxplot() + 
-  # geom_jitter() +
+  geom_boxplot(aes_string(colour="variable", fill="variable"), width=0.7) +
+  stat_summary(geom = "crossbar", width=0.63, position = position_dodge(width = 0.7), color="black", 
+               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  stat_summary(fun=mean, geom="point",colour="darkred", position = position_dodge(width = 0.7)) +
+  stat_summary(fun.data = fun_mean, geom="text", size=3, vjust=1.6, position = position_dodge(width = 0.7)) +
   scale_y_continuous(breaks = c(.2, .4, .6, .8, 1), limits=c(0,1)) +
   xlab("Similarity of manual order") + ylab("Similarity measure") + 
   theme_minimal() + 
   theme(legend.title = element_blank()) +
-  scale_fill_manual("legend", values = colors)
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  guides(fill="none")
 
 plot_h
 plot_due
@@ -275,6 +354,20 @@ ggsave("plots/box_diff_order.eps",
        scale = 1, units = "cm",
        dpi = 300,
        limitsize = TRUE)
+```
+## Task 2 - Signicifance of deviation from machine planning
+```{r}
+library(readxl)
+library(stats)
+
+level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
+
+
+standard_lvl <- 2
+
+t.test(level$Personal, alternative="greater", mu=standard_lvl)
+t.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
+t.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
 ```
 
 ## Task 1 - Likert type questions
