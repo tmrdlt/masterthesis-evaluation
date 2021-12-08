@@ -5,7 +5,9 @@ output:
 ---
 # User study Intelligent Task Management and Visualisation: Evaluation
 
-## Task 1.1 - Extended Nasa-TLX
+## Visualisation
+
+### Task 1.1 - Extended Nasa-TLX
 ```{r}
 getwd()
 library(readxl)
@@ -44,7 +46,7 @@ ggsave("plots/bar_nasa_tlx.eps",
        limitsize = TRUE)
 ```
 
-# Task 1.1 - Number of events by prior experience 
+### Task 1.1 - Number of events by prior experience 
 ```{r}
 getwd()
 library(readxl)
@@ -94,29 +96,7 @@ ggsave("plots/bar_events_by_exp.eps",
        limitsize = TRUE)
 ```
 
-## Task 1.2 Correlation experience -> number of events
-```{r}
-getwd()
-library(readxl)
-library(PerformanceAnalytics)
-events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
-
-data <- events[, c(2:14)]
-chart.Correlation(data, histogram = TRUE, method = "pearson")
-
-cor.test(events$`Used before`, events$Total)
-cor.test(events$`Used before`, events$MOVE)
-cor.test(events$`Used before`, events$CREATE)
-
-
-cor.test(events$`Prior experience`, events$Total)
-cor.test(events$`Prior experience`, events$MOVE)
-cor.test(events$`Prior experience`, events$CREATE)
-plot(events$`Favourite of proposed`, events$`CONVERT`)
-
-```
-
-## Task 1.2 - Nesting comparision
+### Task 1.2 - Nesting comparision
 ```{r}
 getwd()
 library(readxl)
@@ -184,39 +164,8 @@ ggsave("plots/box_levels.eps",
        dpi = 300,
        limitsize = TRUE)
 ```
-## Task 1 - Signicifance of deviation from standard level
-```{r}
-library(readxl)
-library(stats)
 
-level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
-
-# Perform one-sample t-test to check if mean differs signficantly from standard value of 2
-# 1. sample size < 30 -> Check if data is normally distributed via Shapiro-Wilk's test
-# 2. 
-# 3. Outliers? -> Inspect Boxplot
-# http://www.sthda.com/english/wiki/one-sample-t-test-in-r
-# 
-
-library("ggpubr")
-ggqqplot(level$`Favourite of proposed`, ylab = "Personal nesting level",
-         ggtheme = theme_minimal())
-
-standard_lvl <- 2
-
-shapiro.test(level$Personal)
-t.test(level$Personal, alternative = c("greater"), mu=standard_lvl)
-median(level$`Favourite of proposed`)
-
-# http://www.sthda.com/english/wiki/wiki.php?title=one-sample-wilcoxon-signed-rank-test-in-r
-shapiro.test(level$`Favourite of proposed`)
-# One-sample Wilcoxon signed rank test because data is not normally distributed
-wilcox.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
-
-shapiro.test(level$`Favourite overall`)
-wilcox.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
-```
-
+### Task 1.2 - Favoured arrangement comparision
 ```{r}
 getwd()
 library(readxl)
@@ -266,13 +215,14 @@ ggsave("plots/waffle_favourite_overall.eps",
        limitsize = TRUE)
 
 ```
-## Task 2 - Manual scheduling evaluation - Raw data
+### Task 2 - Manual scheduling evaluation - Scatter plots
 ```{r}
 library(readxl)
 library(dplyr)
 library(tidyr)
 library(scales)
 library(ggplot2)
+library(stringr)
 
 raw <- read_excel("data/data_prepared.xlsx", sheet="task_2_raw")
 #View(raw)
@@ -291,16 +241,20 @@ data4 <- raw %>%
 
 colors1 <- c("#a9ad71", "#a9ad71")
 colors2 <- c("#fa9500", "#fa9500")
+labels1 <- c("Estimated finish date", "Resulting finish date")
+labels2 <- c("Estimated missed due dates", "Resulting missed due dates")
+
 
 plot1 <- data1 %>%
   ggplot(aes(y=value, x=variable)) +
   geom_line(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
   geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
-  geom_hline(yintercept=c(as.POSIXct("2021-11-01 19:00:00")), linetype="dotted")+
+  geom_hline(yintercept=c(as.POSIXct("2021-11-01 18:00:00", tz = "UTC")), linetype="dotted")+
   stat_summary(data=data1, geom = "crossbar", fatten=0, width=0.3, color="black", 
               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
   xlab("") + ylab("Finish date") + 
-  scale_y_datetime(breaks=date_breaks('2 hour')) +
+  scale_y_datetime(breaks = date_breaks('2 hour')) +
+  scale_x_discrete(labels = labels1)  +
   theme_minimal() + 
   theme(legend.position="none") + 
   theme(legend.title = element_blank()) + 
@@ -310,11 +264,12 @@ plot1 <- data1 %>%
 plot2 <- data2 %>%
   ggplot(aes(x=variable, y=value)) +
   geom_line(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
-  geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +  geom_hline(yintercept=c(as.POSIXct("2021-11-05 19:00:00")), linetype="dotted")+
+  geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +  geom_hline(yintercept=c(as.POSIXct("2021-11-05 18:00:00", tz = "UTC")), linetype="dotted")+
   stat_summary(geom = "crossbar", fatten=0, width=0.3, color="black", 
               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
   xlab("") + ylab("Finish date") + 
-  scale_y_datetime(breaks=date_breaks('8 hour')) +
+  scale_y_datetime(breaks = date_breaks('8 hour')) +
+  scale_x_discrete(labels = labels1)  +
   theme_minimal() + 
   theme(legend.position="none") + 
   theme(legend.title = element_blank()) + 
@@ -330,6 +285,7 @@ plot3 <- data3 %>%
               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
   xlab("") + ylab("Missed due dates") + 
   scale_y_continuous(breaks = c(0, 1), limits=c(0,1)) +
+  scale_x_discrete(labels = str_wrap(labels2, width = 20))  +
   theme_minimal() + 
   theme(legend.position="none") + 
   theme(legend.title = element_blank()) + 
@@ -344,6 +300,7 @@ plot4 <- data4 %>%
   stat_summary(geom = "crossbar", fatten=0, width=0.3, color="black", 
               fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
   scale_y_continuous(breaks = c(0, 1, 2, 3, 4), limits=c(0,4)) +
+  scale_x_discrete(labels = str_wrap(labels2, width = 20))  +
   xlab("") + ylab("Missed due dates") + 
   theme_minimal() + 
   theme(legend.position="none") + 
@@ -393,9 +350,7 @@ ggsave("plots/scatter_due_2_2.eps",
        limitsize = TRUE)
 ```
 
-
-
-## Task 2 - Manual scheduling evaluation
+### Task 2 - Manual scheduling errors
 ```{r}
 # Removing borders on box_plot: http://biochemres.com/beautiful-minimalist-boxplots-with-r-and-ggplot2
 
@@ -487,22 +442,8 @@ ggsave("plots/box_diff_order.eps",
        height = 10,
        limitsize = TRUE)
 ```
-## Task 2 - Signicifance of deviation from machine planning
-```{r}
-library(readxl)
-library(stats)
 
-level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
-
-
-standard_lvl <- 2
-
-t.test(level$Personal, alternative="greater", mu=standard_lvl)
-t.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
-t.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
-```
-
-## Task 1 - Likert type questions
+### Task 1 - Likert type questions
 ```{r}
 library(dplyr)
 library(readxl)
@@ -543,7 +484,7 @@ ggsave("plots/likert_1.eps",
        limitsize = TRUE)
 ```
 
-## Task 2 - Likert type questions
+### Task 2 - Likert type questions
 ```{r}
 library(dplyr)
 library(readxl)
@@ -591,7 +532,7 @@ ggsave("plots/likert_2.eps",
        limitsize = TRUE)
 ```
 
-## General - Likert type questions
+### General - Likert type questions
 ```{r}
 library(dplyr)
 library(readxl)
@@ -630,4 +571,171 @@ ggsave("plots/likert_3.eps",
        height = 8,
        dpi = 300,
        limitsize = TRUE)
+```
+## Statistic testing
+
+### Task 1.1 Explorative correlation testing experience -> number of events
+```{r}
+getwd()
+library(readxl)
+library(PerformanceAnalytics)
+events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
+
+data <- events[, c(2:14)]
+chart.Correlation(data, histogram = TRUE, method = "pearson")
+
+cor.test(events$`Used before`, events$Total)
+cor.test(events$`Used before`, events$MOVE)
+cor.test(events$`Used before`, events$CREATE)
+
+
+cor.test(events$`Prior experience`, events$Total)
+cor.test(events$`Prior experience`, events$MOVE)
+cor.test(events$`Prior experience`, events$CREATE)
+plot(events$`Favourite of proposed`, events$`CONVERT`)
+```
+
+### Task 1 - Do the used levels significantly deviate from the standard level of 2?
+```{r}
+library(readxl)
+library(stats)
+library(ggpubr)
+
+level <- read_excel("data/data_prepared.xlsx", sheet="task_1_level")
+
+standard_lvl <- 2
+
+# Is data normally distributed? 
+# If yes -> one-sample t-test (http://www.sthda.com/english/wiki/one-sample-t-test-in-r)
+# if no -> One-sample Wilcoxon signed rank test (http://www.sthda.com/english/wiki/wiki.php?title=one-sample-wilcoxon-signed-rank-test-in-r)
+
+# 1. sample size < 30 -> Check if data is normally distributed via 
+# 1.1 Shapiro-Wilk's test 
+# 1.2 Normal Q-Q plot
+# 2. Check for outliers -> Inspection of Boxplot 
+# 3. Perform t-test
+
+# Personal nesting levels 
+# Shapiro-Wilk's test & Normal Q-Q plot -> data is normally distributed
+shapiro.test(level$Personal)
+ggqqplot(level$Personal, ylab = "Personal nesting level")
+# one-sample t-test -> Is MEAN greater then standard_lvl?
+t.test(level$Personal, alternative = c("greater"), mu=standard_lvl)
+
+
+# Favorite of proposed nesting levels
+# Shapiro-Wilk's test -> data is not normally distributed
+shapiro.test(level$`Favourite of proposed`)
+# One-sample Wilcoxon signed rank test -> Is MEDIAN greater then standard_lvl?
+wilcox.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
+
+# Favorite overall nesting levels
+# Shapiro-Wilk's test -> data is not normally distributed
+shapiro.test(level$`Favourite overall`)
+# One-sample Wilcoxon signed rank test -> Is MEDIAN greater then standard_lvl?
+wilcox.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
+```
+
+### Task 2 - Significance of true error
+```{r}
+library(readxl)
+library(stats)
+library(ggpubr)
+
+raw <- read_excel("data/data_prepared.xlsx", sheet="task_2_raw")
+
+# Finish date
+opt_finish_date_2_1 <- as.numeric(as.POSIXct("2021-11-01 18:00:00", tz = "UTC"))
+opt_finish_date_2_2 <- as.numeric(as.POSIXct("2021-11-05 18:00:00", tz = "UTC"))
+
+real_finish_date_2_1 <- as.numeric(raw$`2_1_finish_date_real`)
+real_finish_date_2_2 <- as.numeric(raw$`2_2_finish_date_real`)
+
+shapiro.test(real_finish_date_2_1)
+ggqqplot(real_finish_date_2_1)
+wilcox.test(real_finish_date_2_1, alternative="two.sided", mu=opt_finish_date_2_1)
+median(raw$`2_1_finish_date_real`)
+
+shapiro.test(real_finish_date_2_2)
+ggqqplot(real_finish_date_2_2)
+wilcox.test(real_finish_date_2_2, alternative="greater", mu=opt_finish_date_2_2)
+median(raw$`2_2_finish_date_real`)
+
+
+# Due date
+opt_due_dates_2_1 <- 0
+opt_due_dates_2_2 <- 2
+
+shapiro.test(raw$`2_1_due_dates_real`)
+wilcox.test(level$`2_1_due_dates_real`, alternative="two.sided", mu=opt_due_dates_2_1)
+median(raw$`2_1_due_dates_real`)
+
+shapiro.test(raw$`2_2_due_dates_real`)
+wilcox.test(level$`2_2_due_dates_real`, alternative="greater", mu=opt_due_dates_2_2)
+median(raw$`2_2_due_dates_real`)
+
+
+t.test(level$Personal, alternative="greater", mu=standard_lvl)
+t.test(level$`Favourite of proposed`, alternative="greater", mu=standard_lvl)
+t.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
+```
+
+### Task 2 - Significance of assessment error
+```{r}
+library(readxl)
+library(stats)
+library(ggpubr)
+
+raw <- read_excel("data/data_prepared.xlsx", sheet="task_2_raw")
+
+# Paired Samples Wilcoxon Test > http://www.sthda.com/english/wiki/paired-samples-wilcoxon-test-in-r
+# Paired Samples T-test -> http://www.sthda.com/english/wiki/paired-samples-t-test-in-r
+
+# Finish date
+est_finish_date_2_1 <- as.numeric(raw$`2_1_finish_date_est`)
+est_finish_date_2_2 <- as.numeric(raw$`2_2_finish_date_est`)
+
+real_finish_date_2_1 <- as.numeric(raw$`2_1_finish_date_real`)
+real_finish_date_2_2 <- as.numeric(raw$`2_2_finish_date_real`)
+
+
+diff_2_1 <- est_finish_date_2_1 - real_finish_date_2_1
+diff_2_2 <- est_finish_date_2_2 - real_finish_date_2_2
+
+shapiro.test(diff_2_1)
+wilcox.test(est_finish_date_2_1, real_finish_date_2_1, paired = TRUE,
+       alternative = "two.sided")
+median(raw$`2_1_finish_date_est`)
+median(raw$`2_1_finish_date_real`)
+
+shapiro.test(diff_2_2)
+wilcox.test(est_finish_date_2_2, real_finish_date_2_2, paired = TRUE,
+       alternative = "less")
+median(raw$`2_2_finish_date_est`)
+median(raw$`2_2_finish_date_real`)
+
+
+# Due date
+est_due_dates_2_1 <- as.numeric(raw$`2_1_due_dates_est`)
+est_due_dates_2_2 <- as.numeric(raw$`2_2_due_dates_est`)
+
+real_due_dates_2_1 <- as.numeric(raw$`2_1_due_dates_real`)
+real_due_dates_2_2 <- as.numeric(raw$`2_2_due_dates_real`)
+
+diff_2_1 <- est_due_dates_2_1 - real_due_dates_2_1
+diff_2_2 <- est_due_dates_2_2 - real_due_dates_2_2
+
+shapiro.test(diff_2_1)
+wilcox.test(est_due_dates_2_1, real_due_dates_2_1, paired = TRUE,
+       alternative = "two.sided")
+median(est_due_dates_2_1)
+median(real_due_dates_2_1)
+
+diff_2_2
+shapiro.test(diff_2_2)
+ggqqplot(diff_2_2)
+t.test(est_due_dates_2_2, real_due_dates_2_2, paired = TRUE,
+       alternative = "less")
+mean(est_due_dates_2_2)
+mean(real_due_dates_2_2)
 ```
