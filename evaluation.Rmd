@@ -618,7 +618,7 @@ standard_lvl <- 2
 # Personal nesting levels 
 # Shapiro-Wilk's test & Normal Q-Q plot -> data is normally distributed
 shapiro.test(level$Personal)
-ggqqplot(level$Personal, ylab = "Personal nesting level")
+ggqqplot(level$Personal)
 # one-sample t-test -> Is MEAN greater then standard_lvl?
 t.test(level$Personal, alternative = c("greater"), mu=standard_lvl)
 
@@ -636,6 +636,47 @@ shapiro.test(level$`Favourite overall`)
 wilcox.test(level$`Favourite overall`, alternative="greater", mu=standard_lvl)
 ```
 
+### Task 1 - Significance of difference between number of actions with/without prior experience
+```{r}
+library(readxl)
+library(dplyr)
+library(stats)
+library(ggpubr)
+events <- read_excel("data/data_prepared.xlsx", sheet="task_1_events")
+
+# Are both independent samples normally distributed and variances no difer significantly?
+# If yes -> Unpaired Two-Samples Wilcoxon Test (http://www.sthda.com/english/wiki/unpaired-two-samples-t-test-in-r)
+# If no -> Unpaired Two-Samples T-test (http://www.sthda.com/english/wiki/unpaired-two-samples-wilcoxon-test-in-r)
+
+
+exp <- events %>% filter(`Used before` == 1)
+no_exp <- events %>% filter(`Used before` == 0)
+
+shapiro.test(exp$Total)
+shapiro.test(no_exp$Total)
+var.test(exp$Total, no_exp$Total)
+t.test(exp$Total, no_exp$Total, var.equal = TRUE, alternative = "greater")
+
+shapiro.test(exp$MOVE)
+shapiro.test(no_exp$MOVE)
+var.test(exp$MOVE, no_exp$MOVE)
+t.test(exp$MOVE, no_exp$MOVE, var.equal = TRUE, alternative = "greater")
+
+shapiro.test(exp$CREATE)
+shapiro.test(no_exp$CREATE)
+var.test(exp$CREATE, no_exp$CREATE)
+wilcox.test(exp$CREATE, no_exp$CREATE, var.equal = TRUE, alternative = "greater")
+
+shapiro.test(exp$REORDER)
+shapiro.test(no_exp$REORDER)
+var.test(exp$REORDER, no_exp$REORDER)
+t.test(exp$REORDER, no_exp$REORDER, var.equal = TRUE, alternative = "less")
+
+shapiro.test(exp$CONVERT)
+shapiro.test(no_exp$CONVERT)
+var.test(exp$CONVERT, no_exp$CONVERT)
+wilcox.test(exp$CONVERT, no_exp$CONVERT, var.equal = TRUE, alternative = "less")
+```
 ### Task 2 - Significance of true error
 ```{r}
 library(readxl)
@@ -688,8 +729,9 @@ library(ggpubr)
 
 raw <- read_excel("data/data_prepared.xlsx", sheet="task_2_raw")
 
-# Paired Samples Wilcoxon Test > http://www.sthda.com/english/wiki/paired-samples-wilcoxon-test-in-r
-# Paired Samples T-test -> http://www.sthda.com/english/wiki/paired-samples-t-test-in-r
+# Is difference between pairs normally distributed?
+# If yes -> Paired Samples T-test (http://www.sthda.com/english/wiki/paired-samples-t-test-in-r)
+# If no -> Paired Samples Wilcoxon Test (http://www.sthda.com/english/wiki/paired-samples-wilcoxon-test-in-r)
 
 # Finish date
 est_finish_date_2_1 <- as.numeric(raw$`2_1_finish_date_est`)
