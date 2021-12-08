@@ -266,6 +266,134 @@ ggsave("plots/waffle_favourite_overall.eps",
        limitsize = TRUE)
 
 ```
+## Task 2 - Manual scheduling evaluation - Raw data
+```{r}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(scales)
+library(ggplot2)
+
+raw <- read_excel("data/data_prepared.xlsx", sheet="task_2_raw")
+#View(raw)
+data1 <- raw %>% 
+  select(c(1,2:3)) %>%
+  pivot_longer(cols = c(`2_1_finish_date_est`, `2_1_finish_date_real`), names_to="variable", values_to="value")
+data2 <- raw %>% 
+  select(c(1,4:5)) %>%
+  pivot_longer(cols = c(`2_2_finish_date_est`, `2_2_finish_date_real`), names_to="variable", values_to="value")
+data3 <- raw %>% 
+  select(c(1,6:7)) %>%
+  pivot_longer(cols = c(`2_1_due_dates_est`, `2_1_due_dates_real`), names_to="variable", values_to="value")
+data4 <- raw %>% 
+  select(c(1,8:9)) %>%
+  pivot_longer(cols = c(`2_2_due_dates_est`, `2_2_due_dates_real`), names_to="variable", values_to="value")
+
+colors1 <- c("#a9ad71", "#a9ad71")
+colors2 <- c("#fa9500", "#fa9500")
+
+plot1 <- data1 %>%
+  ggplot(aes(y=value, x=variable)) +
+  geom_line(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
+  geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
+  geom_hline(yintercept=c(as.POSIXct("2021-11-01 19:00:00")), linetype="dotted")+
+  stat_summary(data=data1, geom = "crossbar", fatten=0, width=0.3, color="black", 
+              fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  xlab("") + ylab("Finish date") + 
+  scale_y_datetime(breaks=date_breaks('2 hour')) +
+  theme_minimal() + 
+  theme(legend.position="none") + 
+  theme(legend.title = element_blank()) + 
+  scale_fill_manual(values = colors1) +
+  scale_color_manual(values = colors1)
+
+plot2 <- data2 %>%
+  ggplot(aes(x=variable, y=value)) +
+  geom_line(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
+  geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +  geom_hline(yintercept=c(as.POSIXct("2021-11-05 19:00:00")), linetype="dotted")+
+  stat_summary(geom = "crossbar", fatten=0, width=0.3, color="black", 
+              fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  xlab("") + ylab("Finish date") + 
+  scale_y_datetime(breaks=date_breaks('8 hour')) +
+  theme_minimal() + 
+  theme(legend.position="none") + 
+  theme(legend.title = element_blank()) + 
+  scale_fill_manual(values = colors2) +
+  scale_color_manual(values = colors2)
+
+plot3 <- data3 %>%
+  ggplot(aes(x=variable, y=value)) +
+  geom_line(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
+  geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) + 
+  geom_hline(yintercept=c(0), linetype="dotted")+
+  stat_summary(geom = "crossbar", fatten=0, width=0.3, color="black", 
+              fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  xlab("") + ylab("Missed due dates") + 
+  scale_y_continuous(breaks = c(0, 1), limits=c(0,1)) +
+  theme_minimal() + 
+  theme(legend.position="none") + 
+  theme(legend.title = element_blank()) + 
+  scale_fill_manual(values = colors1) +
+  scale_color_manual(values = colors1)
+
+plot4 <- data4 %>%
+  ggplot(aes(x=variable, y=value)) +
+  geom_line(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) +
+  geom_point(aes(y=value, x=variable, color=variable, group=`Participant ID`), position = position_jitter(w = 0.2, h = 0, seed = 1)) + 
+  geom_hline(yintercept=c(2), linetype="dotted")+
+  stat_summary(geom = "crossbar", fatten=0, width=0.3, color="black", 
+              fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) }) +
+  scale_y_continuous(breaks = c(0, 1, 2, 3, 4), limits=c(0,4)) +
+  xlab("") + ylab("Missed due dates") + 
+  theme_minimal() + 
+  theme(legend.position="none") + 
+  theme(legend.title = element_blank()) + 
+  scale_fill_manual(values = colors2) +
+  scale_color_manual(values = colors2)
+
+plot1
+plot2
+plot3
+plot4
+
+ggsave("plots/scatter_finish_2_1.eps",
+       plot = plot1,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       height = 12,
+       width = 12,
+       limitsize = TRUE)
+
+ggsave("plots/scatter_finish_2_2.eps",
+       plot = plot2,
+       device = "eps",
+       units = "cm",
+       scale = 1,
+       dpi = 300,
+       height = 12,
+       width = 12,
+       limitsize = TRUE)
+
+ggsave("plots/scatter_due_2_1.eps",
+       plot = plot3,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       height = 8,
+       width = 10,
+       limitsize = TRUE)
+ggsave("plots/scatter_due_2_2.eps",
+       plot = plot4,
+       device = "eps",
+       scale = 1, units = "cm",
+       dpi = 300,
+       height = 8,
+       width = 10,
+       limitsize = TRUE)
+```
+
+
 
 ## Task 2 - Manual scheduling evaluation
 ```{r}
@@ -317,6 +445,7 @@ plot_due <- data_due %>%
   scale_color_manual(values = colors) +
   guides(fill="none")
 
+summary(data_order)
 plot_order <- data_order %>%
   ggplot(aes(x=factor(Type, level=unique(Type)), y=value, fill=variable)) + 
   geom_boxplot(aes_string(colour="variable", fill="variable"), width=0.7) +
@@ -341,18 +470,21 @@ ggsave("plots/box_diff_h.eps",
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
+       height = 10,
        limitsize = TRUE)
 ggsave("plots/box_diff_due.eps",
        plot = plot_due,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
+       height = 10,
        limitsize = TRUE)
 ggsave("plots/box_diff_order.eps",
        plot = plot_order,
        device = "eps",
        scale = 1, units = "cm",
        dpi = 300,
+       height = 10,
        limitsize = TRUE)
 ```
 ## Task 2 - Signicifance of deviation from machine planning
