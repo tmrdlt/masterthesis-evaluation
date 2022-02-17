@@ -13,7 +13,7 @@ Evalution of the results of the user study for the Khipu prototype using Python,
 - [R-Studio](https://www.rstudio.com/) (`brew install rstudio --cask`)
 
 ### Run .Rmd locally
-- Open `/r/evaluation.Rmd` in R-Studio
+- Open `evaluation.Rmd` in R-Studio
 - Install required packages
 - Run all chunks
 
