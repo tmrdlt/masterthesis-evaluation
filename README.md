@@ -1,6 +1,6 @@
 # Masterthesis-evaluation
 
-Evalution of the results of the user study for the Khipu prototype using Python, R and [R Markdown](https://rmarkdown.rstudio.com/).
+Evalution of the results of the user study for the Khipu prototype using R and [R Markdown](https://rmarkdown.rstudio.com/).
 
 ## Evaluation results
 - See [`evaluation.html`](/r/evaluation.html) for a knitted version of the .Rmd
@@ -21,3 +21,8 @@ Evalution of the results of the user study for the Khipu prototype using Python,
 ### Requirements:
 - Python 3.x.x
 - At least Node Gallium
+
+## `/plantuml`: Architechture and class diagram of prototype created with PlantUML
+### Requirements:
+- [PlantUML](https://plantuml.com/en/)
+
