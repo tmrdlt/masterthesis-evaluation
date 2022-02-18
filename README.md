@@ -13,7 +13,7 @@ Statistic evalution and visualisation of the results of the user study for the K
 - Install required packages
 - Run all chunks
 
-## `/scripts`: Additional scripts using Python and Javascript
+## `/scripts`: Additional calculations using Python and Javascript
 ### Requirements:
 - Python 3.x.x
 - At least Node Gallium
